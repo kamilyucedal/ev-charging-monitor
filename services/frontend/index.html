@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Charging Monitor - Göteborg</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>⚡ EV Charging Monitor</h1>
+            <p>Real-time charging station monitoring in Göteborg</p>
+        </header>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-panel">
+            <div class="stat-card">
+                <h3>Total Stations</h3>
+                <p id="total-stations" class="stat-value">-</p>
+            </div>
+            <div class="stat-card">
+                <h3>Active Sessions</h3>
+                <p id="active-sessions" class="stat-value">-</p>
+            </div>
+            <div class="stat-card">
+                <h3>Today's Energy</h3>
+                <p id="today-energy" class="stat-value">-</p>
+            </div>
+            <div class="stat-card">
+                <h3>Today's Revenue</h3>
+                <p id="today-revenue" class="stat-value">-</p>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <button id="refresh-btn" class="btn btn-primary">🔄 Refresh</button>
+            <button id="add-station-btn" class="btn btn-secondary">➕ Add Station</button>
+            <label class="auto-refresh">
+                <input type="checkbox" id="auto-refresh" checked> Auto-refresh (5s)
+            </label>
+        </div>
+
+        <!-- Map -->
+        <div id="map"></div>
+
+        <!-- Station Details Sidebar -->
+        <div id="station-details" class="sidebar hidden">
+            <button id="close-sidebar" class="close-btn">✕</button>
+            <div id="station-info">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Station Modal -->
+    <div id="add-station-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Add New Charging Station</h2>
+            <form id="add-station-form">
+                <label>
+                    Station Name:
+                    <input type="text" id="station-name" required>
+                </label>
+                <label>
+                    City:
+                    <input type="text" id="station-city" value="Göteborg" required>
+                </label>
+                <label>
+                    Power (kW):
+                    <input type="number" id="station-power" value="50" required>
+                </label>
+                <label>
+                    Connector Type:
+                    <select id="station-connector">
+                        <option value="CCS">CCS</option>
+                        <option value="Type2">Type 2</option>
+                        <option value="CHAdeMO">CHAdeMO</option>
+                    </select>
+                </label>
+                <p class="hint">Click on the map to set location</p>
+                <input type="hidden" id="station-lat">
+                <input type="hidden" id="station-lng">
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Add Station</button>
+                    <button type="button" id="cancel-add" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
