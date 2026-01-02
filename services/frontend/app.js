@@ -318,8 +318,8 @@ document.getElementById('close-sidebar').addEventListener('click', () => {
 });
 
 document.getElementById('add-station-btn').addEventListener('click', () => {
-    const modal = document.getElementById('add-station-modal');
-    modal.classList.remove('hidden');
+    const sidebar = document.getElementById('add-station-sidebar');
+    sidebar.classList.remove('hidden');
     
     // Add visual feedback to map
     const mapContainer = document.getElementById('map');
@@ -327,8 +327,6 @@ document.getElementById('add-station-btn').addEventListener('click', () => {
     mapContainer.style.border = '3px dashed #667eea';
     
     console.log('🎯 Add station mode activated - click on map!');
-    
-    // Show instruction overlay
     showMapInstruction();
 });
 
@@ -393,6 +391,31 @@ document.getElementById('auto-refresh').addEventListener('change', (e) => {
         }, 5000);
     } else {
         clearInterval(autoRefreshInterval);
+    }
+});
+
+document.getElementById('close-add-sidebar').addEventListener('click', () => {
+    const sidebar = document.getElementById('add-station-sidebar');
+    sidebar.classList.add('hidden');
+    
+    // Reset everything (same as before)
+    if (tempMarker) {
+        map.removeLayer(tempMarker);
+        tempMarker = null;
+    }
+    
+    const mapContainer = document.getElementById('map');
+    mapContainer.style.cursor = 'grab';
+    mapContainer.style.border = 'none';
+    
+    document.getElementById('add-station-form').reset();
+    document.getElementById('station-lat').value = '';
+    document.getElementById('station-lng').value = '';
+    
+    const coordDisplay = document.getElementById('coord-display');
+    if (coordDisplay) {
+        coordDisplay.textContent = 'No location selected yet';
+        coordDisplay.style.color = '#e74c3c';
     }
 });
 

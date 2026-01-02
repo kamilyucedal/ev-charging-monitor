@@ -56,48 +56,52 @@
         </div>
     </div>
 
-    <!-- Add Station Modal -->
-    <div id="add-station-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Add New Charging Station</h2>
-            <form id="add-station-form">
-                <label>
-                    Station Name:
-                    <input type="text" id="station-name" required placeholder="e.g., Nordstan Parking">
-                </label>
-                <label>
-                    City:
-                    <input type="text" id="station-city" value="Göteborg" required>
-                </label>
-                <label>
-                    Power (kW):
-                    <input type="number" id="station-power" value="50" min="1" max="350" required>
-                </label>
-                <label>
-                    Connector Type:
-                    <select id="station-connector">
-                        <option value="CCS">CCS</option>
-                        <option value="Type2">Type 2</option>
-                        <option value="CHAdeMO">CHAdeMO</option>
-                    </select>
-                </label>
-                
-                <!-- Location Selection -->
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #667eea;">📍 Station Location</p>
-                    <p class="hint" style="margin-bottom: 10px;">Click anywhere on the map to set the station location</p>
-                    <p id="coord-display" style="margin: 0; color: #e74c3c; font-weight: 500;">No location selected yet</p>
-                    <input type="hidden" id="station-lat">
-                    <input type="hidden" id="station-lng">
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">✅ Add Station</button>
-                    <button type="button" id="cancel-add" class="btn btn-secondary">❌ Cancel</button>
-                </div>
-            </form>
-        </div>
+<!-- Add Station Sidebar (modal yerine) -->
+<div id="add-station-sidebar" class="add-sidebar hidden">
+    <div class="sidebar-header">
+        <h2>Add New Station</h2>
+        <button id="close-add-sidebar" class="close-btn">✕</button>
     </div>
+    
+    <div class="sidebar-content">
+        <div class="instruction-box">
+            <p style="margin: 0; color: #667eea; font-weight: 600;">
+                📍 Click on the map to set location
+            </p>
+        </div>
+        
+        <form id="add-station-form">
+            <label>
+                Station Name:
+                <input type="text" id="station-name" required placeholder="e.g., Nordstan Parking">
+            </label>
+            <label>
+                City:
+                <input type="text" id="station-city" value="Göteborg" required>
+            </label>
+            <label>
+                Power (kW):
+                <input type="number" id="station-power" value="50" min="1" max="350" required>
+            </label>
+            <label>
+                Connector Type:
+                <select id="station-connector">
+                    <option value="CCS">CCS</option>
+                    <option value="Type2">Type 2</option>
+                    <option value="CHAdeMO">CHAdeMO</option>
+                </select>
+            </label>
+            
+            <div class="location-display">
+                <p id="coord-display">No location selected yet</p>
+                <input type="hidden" id="station-lat">
+                <input type="hidden" id="station-lng">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">✅ Add Station</button>
+        </form>
+    </div>
+</div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>

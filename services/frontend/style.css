@@ -264,3 +264,62 @@ header p {
     from { opacity: 1; }
     to { opacity: 0; }
 }
+
+.add-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 350px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    padding: 0;
+    overflow-y: auto;
+    transition: transform 0.3s;
+    z-index: 1000;
+}
+
+.add-sidebar.hidden {
+    transform: translateX(-100%);
+}
+
+.sidebar-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.sidebar-content {
+    padding: 1.5rem;
+}
+
+.instruction-box {
+    background: #f0f4ff;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    margin-bottom: 20px;
+}
+
+.location-display {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.location-display p {
+    margin: 0;
+    font-weight: 500;
+}
+
+.btn-block {
+    width: 100%;
+    margin-top: 15px;
+}
