@@ -47,74 +47,77 @@
         <!-- Map -->
         <div id="map"></div>
 
-        <!-- Station Details Sidebar -->
+        <!-- Station Details Sidebar (Right) -->
         <div id="station-details" class="sidebar hidden">
             <button id="close-sidebar" class="close-btn">✕</button>
-            <div id="station-info">
-                <!-- Filled by JS -->
+            <div id="station-info"></div>
+        </div>
+
+        <!-- Add Station Sidebar (Left) -->
+        <div id="add-station-sidebar" class="add-sidebar hidden">
+            <div class="sidebar-header">
+                <h2>Add New Station</h2>
+                <button id="close-add-sidebar" class="close-btn">✕</button>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="instruction-box">
+                    <p style="margin: 0; color: #667eea; font-weight: 600;">
+                        📍 Click on the map to set location
+                    </p>
+                </div>
+                
+                <form id="add-station-form">
+                    <label>
+                        Station Name:
+                        <input type="text" id="station-name" required placeholder="e.g., Nordstan Parking">
+                    </label>
+                    
+                    <label>
+                        City:
+                        <input type="text" id="station-city" value="Göteborg" required>
+                    </label>
+                    
+                    <label>
+                        Power (kW):
+                        <input type="number" id="station-power" value="50" min="1" max="350" required>
+                    </label>
+                    
+                    <label>
+                        Connector Type:
+                        <select id="station-connector">
+                            <option value="CCS">CCS</option>
+                            <option value="Type2">Type 2</option>
+                            <option value="CHAdeMO">CHAdeMO</option>
+                        </select>
+                    </label>
+                    
+                    <!-- Preset Locations -->
+                    <label>
+                        Quick Location (Optional):
+                        <select id="preset-location">
+                            <option value="">-- Click map or choose --</option>
+                            <option value="57.7089,11.9746">Göteborg Central Station</option>
+                            <option value="57.7070,11.9688">Nordstan Mall</option>
+                            <option value="57.7070,11.9391">Lindholmen Science Park</option>
+                            <option value="57.7226,11.9391">Hisingen Ferry</option>
+                            <option value="57.6832,11.9434">Slottsskogen Park</option>
+                        </select>
+                    </label>
+                    
+                    <div class="location-display">
+                        <p id="coord-display" style="color: #e74c3c; font-weight: 500;">
+                            No location selected yet
+                        </p>
+                        <input type="hidden" id="station-lat">
+                        <input type="hidden" id="station-lng">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">✅ Add Station</button>
+                </form>
             </div>
         </div>
     </div>
-
-<!-- Add Station Sidebar (modal yerine) -->
-<div id="add-station-sidebar" class="add-sidebar hidden">
-    <div class="sidebar-header">
-        <h2>Add New Station</h2>
-        <button id="close-add-sidebar" class="close-btn">✕</button>
-    </div>
-    
-    <div class="sidebar-content">
-        <div class="instruction-box">
-            <p style="margin: 0; color: #667eea; font-weight: 600;">
-                📍 Click on the map to set location
-            </p>
-        </div>
-        
-        <form id="add-station-form">
-            <label>
-                Station Name:
-                <input type="text" id="station-name" required placeholder="e.g., Nordstan Parking">
-            </label>
-            <label>
-                City:
-                <input type="text" id="station-city" value="Göteborg" required>
-            </label>
-            <label>
-                Power (kW):
-                <input type="number" id="station-power" value="50" min="1" max="350" required>
-            </label>
-            <label>
-                Connector Type:
-                <select id="station-connector">
-                    <option value="CCS">CCS</option>
-                    <option value="Type2">Type 2</option>
-                    <option value="CHAdeMO">CHAdeMO</option>
-                </select>
-            </label>
-
-            <!-- Preset Locations -->
-            <label>
-                Quick Location:
-                <select id="preset-location">
-                    <option value="">-- Click map or choose preset --</option>
-                    <option value="57.7089,11.9746">Göteborg Central Station</option>
-                    <option value="57.7070,11.9688">Nordstan Mall</option>
-                    <option value="57.7070,11.9391">Lindholmen Science Park</option>
-                    <option value="57.7226,11.9391">Hisingen Ferry</option>
-                    <option value="57.6832,11.9434">Slottsskogen Park</option>
-                </select>
-            </label>
-            
-            <div class="location-display">
-                <p id="coord-display">No location selected yet</p>
-                <input type="hidden" id="station-lat">
-                <input type="hidden" id="station-lng">
-            </div>
-            
-            <button type="submit" class="btn btn-primary btn-block">✅ Add Station</button>
-        </form>
-    </div>
-</div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="app.js"></script>

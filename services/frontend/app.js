@@ -7,8 +7,8 @@ let tempMarker = null; // Global variable
 let isAddingStation = false; // Flag for adding mode
 
 // Initialize map
+// Initialize map
 function initMap() {
-    // Center on Göteborg
     map = L.map('map').setView([57.7089, 11.9746], 13);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -18,72 +18,84 @@ function initMap() {
     
     // Map click handler for adding stations
     map.on('click', (e) => {
-        console.log('🗺️ Map clicked at:', e.latlng.lat, e.latlng.lng); // DEBUG LOG
+        console.log('🗺️ Map clicked at:', e.latlng.lat, e.latlng.lng);
         
-        const modal = document.getElementById('add-station-modal');
+        const sidebar = document.getElementById('add-station-sidebar');
         
-        // Check if modal is open
-        if (!modal.classList.contains('hidden')) {
-            console.log('✅ Modal is open, setting location...'); // DEBUG LOG
+        // NULL CHECK - önemli!
+        if (!sidebar) {
+            console.warn('⚠️ add-station-sidebar element not found in DOM');
+            return;
+        }
+        
+        if (!sidebar.classList.contains('hidden')) {
+            console.log('✅ Sidebar is open, setting location...');
             
-            // Set coordinates
             const lat = e.latlng.lat.toFixed(6);
             const lng = e.latlng.lng.toFixed(6);
             
-            document.getElementById('station-lat').value = lat;
-            document.getElementById('station-lng').value = lng;
+            const latInput = document.getElementById('station-lat');
+            const lngInput = document.getElementById('station-lng');
             
-            console.log('📍 Set coordinates:', lat, lng); // DEBUG LOG
-            
-            // Remove previous temp marker
-            if (tempMarker) {
-                map.removeLayer(tempMarker);
+            if (latInput && lngInput) {
+                latInput.value = lat;
+                lngInput.value = lng;
+                
+                console.log('📍 Set coordinates:', lat, lng);
+                
+                // Remove previous temp marker
+                if (tempMarker) {
+                    map.removeLayer(tempMarker);
+                }
+                
+                // Add temporary marker
+                tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
+                    icon: L.divIcon({
+                        className: 'temp-marker',
+                        html: `
+                            <div style="
+                                background: #e74c3c;
+                                width: 40px;
+                                height: 40px;
+                                border-radius: 50%;
+                                border: 4px solid white;
+                                box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 20px;
+                            ">
+                                📍
+                            </div>
+                        `,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40]
+                    })
+                }).addTo(map);
+                
+                console.log('✅ Temp marker added');
+                
+                // Update coordinate display
+                const coordDisplay = document.getElementById('coord-display');
+                if (coordDisplay) {
+                    coordDisplay.textContent = `✅ Selected: ${lat}, ${lng}`;
+                    coordDisplay.style.color = '#2ecc71';
+                    coordDisplay.style.fontWeight = 'bold';
+                }
+                
+                // Flash the map
+                const mapContainer = document.getElementById('map');
+                if (mapContainer) {
+                    mapContainer.style.border = '3px solid #2ecc71';
+                    setTimeout(() => {
+                        mapContainer.style.border = 'none';
+                    }, 500);
+                }
+            } else {
+                console.error('❌ Coordinate input fields not found');
             }
-            
-            // Add temporary marker at clicked location
-            tempMarker = L.marker([e.latlng.lat, e.latlng.lng], {
-                icon: L.divIcon({
-                    className: 'temp-marker',
-                    html: `
-                        <div style="
-                            background: #e74c3c;
-                            width: 40px;
-                            height: 40px;
-                            border-radius: 50%;
-                            border: 4px solid white;
-                            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 20px;
-                        ">
-                            📍
-                        </div>
-                    `,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 40]
-                })
-            }).addTo(map);
-            
-            console.log('✅ Temp marker added'); // DEBUG LOG
-            
-            // Show success message
-            const coordDisplay = document.getElementById('coord-display');
-            if (coordDisplay) {
-                coordDisplay.textContent = `✅ Selected: ${lat}, ${lng}`;
-                coordDisplay.style.color = '#2ecc71';
-                coordDisplay.style.fontWeight = 'bold';
-            }
-            
-            // Flash the map to show it worked
-            const mapContainer = document.getElementById('map');
-            mapContainer.style.border = '3px solid #2ecc71';
-            setTimeout(() => {
-                mapContainer.style.border = 'none';
-            }, 500);
-            
         } else {
-            console.log('ℹ️ Modal is closed, ignoring click'); // DEBUG LOG
+            console.log('ℹ️ Sidebar is closed, ignoring click');
         }
     });
 }
@@ -126,6 +138,19 @@ function showMapInstruction() {
     setTimeout(() => {
         overlay.style.animation = 'fadeOut 0.3s';
         setTimeout(() => overlay.remove(), 300);
+    }, 3000);
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s';
+        setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
@@ -261,8 +286,16 @@ async function showStationDetails(stationId) {
 }
 
 // Add station
+// Add station - Simple version with page reload
 async function addStation(stationData) {
+    const submitBtn = document.querySelector('#add-station-form button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    
     try {
+        // Show loading
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ Adding...';
+        
         const response = await fetch(`${API_URL}/stations`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -270,42 +303,22 @@ async function addStation(stationData) {
         });
         
         if (response.ok) {
-            alert('✅ Station added successfully!');
-            document.getElementById('add-station-modal').classList.add('hidden');
-            document.getElementById('add-station-form').reset();
-            
-            // Remove temp marker
-            if (tempMarker) {
-                map.removeLayer(tempMarker);
-                tempMarker = null;
-            }
-            
-            // Reset map style
-            const mapContainer = document.getElementById('map');
-            mapContainer.style.cursor = 'grab';
-            mapContainer.style.border = 'none';
-            
-            // Reset coordinate display
-            const coordDisplay = document.getElementById('coord-display');
-            if (coordDisplay) {
-                coordDisplay.textContent = 'No location selected yet';
-                coordDisplay.style.color = '#e74c3c';
-            }
-            
-            // Remove instruction overlay
-            const instruction = document.getElementById('map-instruction');
-            if (instruction) instruction.remove();
-            
-            loadStations();
-            loadStats();
+            submitBtn.textContent = '✅ Success!';
+            setTimeout(() => location.reload(), 1000);
         } else {
-            alert('❌ Failed to add station');
+            submitBtn.textContent = '❌ Failed';
+            submitBtn.disabled = false;
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+            }, 2000);
         }
     } catch (error) {
         console.error('Error adding station:', error);
-        alert('❌ Failed to add station. Check console for details.');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 }
+
 
 // Event listeners
 document.getElementById('refresh-btn').addEventListener('click', () => {
@@ -331,6 +344,7 @@ document.getElementById('add-station-btn').addEventListener('click', () => {
 });
 
 
+// Form submit handler'a ekle
 document.getElementById('add-station-form').addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -338,10 +352,24 @@ document.getElementById('add-station-form').addEventListener('submit', (e) => {
     const lng = document.getElementById('station-lng').value;
     
     if (!lat || !lng) {
-        alert('Please click on the map to set location!');
+        // Highlight the location display
+        const coordDisplay = document.getElementById('coord-display');
+        coordDisplay.textContent = '⚠️ Please select a location first!';
+        coordDisplay.style.color = '#e74c3c';
+        coordDisplay.style.fontSize = '1.1rem';
+        coordDisplay.style.fontWeight = 'bold';
+        
+        // Shake animation
+        const locationBox = document.querySelector('.location-display');
+        locationBox.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+            locationBox.style.animation = '';
+        }, 500);
+        
         return;
     }
     
+    // Continue with submission
     const stationData = {
         name: document.getElementById('station-name').value,
         city: document.getElementById('station-city').value,
@@ -353,6 +381,7 @@ document.getElementById('add-station-form').addEventListener('submit', (e) => {
     
     addStation(stationData);
 });
+
 
 // Auto-refresh
 document.getElementById('auto-refresh').addEventListener('change', (e) => {
