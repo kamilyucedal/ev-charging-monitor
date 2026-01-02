@@ -4,6 +4,7 @@ let markers = {};
 let autoRefreshInterval;
 let tempMarker = null; // Global variable
 
+let isAddingStation = false; // Flag for adding mode
 
 // Initialize map
 function initMap() {
@@ -17,12 +18,22 @@ function initMap() {
     
     // Map click handler for adding stations
     map.on('click', (e) => {
+        console.log('🗺️ Map clicked at:', e.latlng.lat, e.latlng.lng); // DEBUG LOG
+        
         const modal = document.getElementById('add-station-modal');
         
+        // Check if modal is open
         if (!modal.classList.contains('hidden')) {
+            console.log('✅ Modal is open, setting location...'); // DEBUG LOG
+            
             // Set coordinates
-            document.getElementById('station-lat').value = e.latlng.lat.toFixed(6);
-            document.getElementById('station-lng').value = e.latlng.lng.toFixed(6);
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            
+            document.getElementById('station-lat').value = lat;
+            document.getElementById('station-lng').value = lng;
+            
+            console.log('📍 Set coordinates:', lat, lng); // DEBUG LOG
             
             // Remove previous temp marker
             if (tempMarker) {
@@ -45,7 +56,6 @@ function initMap() {
                             align-items: center;
                             justify-content: center;
                             font-size: 20px;
-                            animation: bounce 1s infinite;
                         ">
                             📍
                         </div>
@@ -55,15 +65,68 @@ function initMap() {
                 })
             }).addTo(map);
             
+            console.log('✅ Temp marker added'); // DEBUG LOG
+            
             // Show success message
             const coordDisplay = document.getElementById('coord-display');
             if (coordDisplay) {
-                coordDisplay.textContent = `Selected: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+                coordDisplay.textContent = `✅ Selected: ${lat}, ${lng}`;
                 coordDisplay.style.color = '#2ecc71';
                 coordDisplay.style.fontWeight = 'bold';
             }
+            
+            // Flash the map to show it worked
+            const mapContainer = document.getElementById('map');
+            mapContainer.style.border = '3px solid #2ecc71';
+            setTimeout(() => {
+                mapContainer.style.border = 'none';
+            }, 500);
+            
+        } else {
+            console.log('ℹ️ Modal is closed, ignoring click'); // DEBUG LOG
         }
     });
+}
+
+
+// Show instruction overlay on map
+function showMapInstruction() {
+    // Remove existing overlay if any
+    const existing = document.getElementById('map-instruction');
+    if (existing) existing.remove();
+    
+    // Create instruction overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'map-instruction';
+    overlay.innerHTML = `
+        <div style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 1000;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            pointer-events: none;
+            animation: fadeIn 0.3s;
+        ">
+            📍 Click anywhere on the map to set station location
+        </div>
+    `;
+    
+    document.getElementById('map').appendChild(overlay);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        overlay.style.animation = 'fadeOut 0.3s';
+        setTimeout(() => overlay.remove(), 300);
+    }, 3000);
 }
 
 // Fetch and display stations
@@ -217,12 +280,21 @@ async function addStation(stationData) {
                 tempMarker = null;
             }
             
+            // Reset map style
+            const mapContainer = document.getElementById('map');
+            mapContainer.style.cursor = 'grab';
+            mapContainer.style.border = 'none';
+            
             // Reset coordinate display
             const coordDisplay = document.getElementById('coord-display');
             if (coordDisplay) {
                 coordDisplay.textContent = 'No location selected yet';
                 coordDisplay.style.color = '#e74c3c';
             }
+            
+            // Remove instruction overlay
+            const instruction = document.getElementById('map-instruction');
+            if (instruction) instruction.remove();
             
             loadStations();
             loadStats();
@@ -246,7 +318,18 @@ document.getElementById('close-sidebar').addEventListener('click', () => {
 });
 
 document.getElementById('add-station-btn').addEventListener('click', () => {
-    document.getElementById('add-station-modal').classList.remove('hidden');
+    const modal = document.getElementById('add-station-modal');
+    modal.classList.remove('hidden');
+    
+    // Add visual feedback to map
+    const mapContainer = document.getElementById('map');
+    mapContainer.style.cursor = 'crosshair';
+    mapContainer.style.border = '3px dashed #667eea';
+    
+    console.log('🎯 Add station mode activated - click on map!');
+    
+    // Show instruction overlay
+    showMapInstruction();
 });
 
 document.getElementById('cancel-add').addEventListener('click', () => {
@@ -258,6 +341,11 @@ document.getElementById('cancel-add').addEventListener('click', () => {
         tempMarker = null;
     }
     
+    // Reset map style
+    const mapContainer = document.getElementById('map');
+    mapContainer.style.cursor = 'grab';
+    mapContainer.style.border = 'none';
+    
     // Reset form
     document.getElementById('add-station-form').reset();
     document.getElementById('station-lat').value = '';
@@ -267,6 +355,10 @@ document.getElementById('cancel-add').addEventListener('click', () => {
         coordDisplay.textContent = 'No location selected yet';
         coordDisplay.style.color = '#e74c3c';
     }
+    
+    // Remove instruction overlay
+    const instruction = document.getElementById('map-instruction');
+    if (instruction) instruction.remove();
 });
 
 document.getElementById('add-station-form').addEventListener('submit', (e) => {
