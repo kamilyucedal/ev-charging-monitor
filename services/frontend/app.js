@@ -330,34 +330,6 @@ document.getElementById('add-station-btn').addEventListener('click', () => {
     showMapInstruction();
 });
 
-document.getElementById('cancel-add').addEventListener('click', () => {
-    document.getElementById('add-station-modal').classList.add('hidden');
-    
-    // Remove temp marker
-    if (tempMarker) {
-        map.removeLayer(tempMarker);
-        tempMarker = null;
-    }
-    
-    // Reset map style
-    const mapContainer = document.getElementById('map');
-    mapContainer.style.cursor = 'grab';
-    mapContainer.style.border = 'none';
-    
-    // Reset form
-    document.getElementById('add-station-form').reset();
-    document.getElementById('station-lat').value = '';
-    document.getElementById('station-lng').value = '';
-    const coordDisplay = document.getElementById('coord-display');
-    if (coordDisplay) {
-        coordDisplay.textContent = 'No location selected yet';
-        coordDisplay.style.color = '#e74c3c';
-    }
-    
-    // Remove instruction overlay
-    const instruction = document.getElementById('map-instruction');
-    if (instruction) instruction.remove();
-});
 
 document.getElementById('add-station-form').addEventListener('submit', (e) => {
     e.preventDefault();
