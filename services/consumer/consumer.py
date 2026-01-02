@@ -5,6 +5,10 @@ from datetime import datetime
 from kafka import KafkaConsumer
 import psycopg2
 from elasticsearch import Elasticsearch
+import signal
+import sys
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -20,12 +24,43 @@ POSTGRES_CONFIG = {
 }
 ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
 
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(b'{"status": "healthy"}')
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        pass  # Suppress logs
+
+def start_health_server():
+    server = HTTPServer(('0.0.0.0', 8080), HealthCheckHandler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    logger.info("✅ Health check endpoint started on :8080/health")
+
 class ChargingEventConsumer:
     def __init__(self):
         self.consumer = None
         self.pg_conn = None
         self.es_client = None
+        self.running = True  # Yeni
         
+    def shutdown(self, signum, frame):
+        """Graceful shutdown handler"""
+        logger.info("🛑 Shutdown signal received, cleaning up...")
+        self.running = False
+        if self.consumer:
+            self.consumer.close()
+        if self.pg_conn:
+            self.pg_conn.close()
+        sys.exit(0)
+
     def connect_services(self):
         """Connect to Kafka, PostgreSQL, and Elasticsearch"""
         # Kafka
@@ -151,6 +186,12 @@ class ChargingEventConsumer:
         """Main consumer loop"""
         logger.info("🚀 Starting EV Charging Event Consumer...")
         
+        start_health_server() 
+        
+        # Register signal handlers
+        signal.signal(signal.SIGINT, self.shutdown)
+        signal.signal(signal.SIGTERM, self.shutdown)
+
         import time
         time.sleep(15)  # Wait for all services to be ready
         
@@ -159,6 +200,9 @@ class ChargingEventConsumer:
         logger.info("🔄 Consuming events...")
         
         for message in self.consumer:
+            if not self.running:  # Check shutdown flag
+                break
+
             try:
                 event = message.value
                 event_type = event['event_type']
@@ -173,6 +217,8 @@ class ChargingEventConsumer:
             except Exception as e:
                 logger.error(f"Error processing event: {e}")
                 continue
+
+        logger.info("✅ Consumer shutdown complete")
 
 if __name__ == "__main__":
     consumer = ChargingEventConsumer()
