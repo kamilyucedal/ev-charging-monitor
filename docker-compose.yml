@@ -69,7 +69,7 @@ services:
     ports:
       - "5601:5601"
     environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://${ELASTICSEARCH_HOST}:9200
     networks:
       - ev-network
 
@@ -82,7 +82,7 @@ services:
       - kafka
       - postgres
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       POSTGRES_HOST: postgres
       POSTGRES_USER: evuser
       POSTGRES_PASSWORD: evpass
@@ -100,12 +100,17 @@ services:
       - postgres
       - elasticsearch
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       POSTGRES_HOST: postgres
-      POSTGRES_USER: evuser
-      POSTGRES_PASSWORD: evpass
-      POSTGRES_DB: evcharging
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       ELASTICSEARCH_HOST: elasticsearch
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ev-network
 

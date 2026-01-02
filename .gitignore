@@ -48,6 +48,9 @@ Thumbs.db
 *.db
 *.sqlite
 
+#Environment
+.env
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
