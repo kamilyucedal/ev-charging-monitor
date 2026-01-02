@@ -181,13 +181,23 @@ class ChargingEventConsumer:
         self.es_client.index(index='charging-events', document=event)
         
         logger.info(f"✅ Completed session: {event['session_id'][:8]} - {event['energy_delivered_kwh']} kWh, €{event['cost_eur']}")
+
+    def validate_event(self, event):
+        """Validate event structure"""
+        required_fields = ['event_type', 'session_id', 'station_id', 'timestamp']
     
+        for field in required_fields:
+            if field not in event:
+                raise ValueError(f"Missing required field: {field}")
+    
+        return True
+
     def run(self):
         """Main consumer loop"""
         logger.info("🚀 Starting EV Charging Event Consumer...")
         
         start_health_server() 
-        
+
         # Register signal handlers
         signal.signal(signal.SIGINT, self.shutdown)
         signal.signal(signal.SIGTERM, self.shutdown)
@@ -205,8 +215,13 @@ class ChargingEventConsumer:
 
             try:
                 event = message.value
+                if not self.validate_event(event):
+                    logger.warning(f"Invalid event skipped: {event}")
+                    continue
+
                 event_type = event['event_type']
-                
+
+ 
                 if event_type == 'charging_started':
                     self.process_charging_started(event)
                 elif event_type == 'charging_progress':
