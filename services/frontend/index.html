@@ -63,7 +63,7 @@
             <form id="add-station-form">
                 <label>
                     Station Name:
-                    <input type="text" id="station-name" required>
+                    <input type="text" id="station-name" required placeholder="e.g., Nordstan Parking">
                 </label>
                 <label>
                     City:
@@ -71,7 +71,7 @@
                 </label>
                 <label>
                     Power (kW):
-                    <input type="number" id="station-power" value="50" required>
+                    <input type="number" id="station-power" value="50" min="1" max="350" required>
                 </label>
                 <label>
                     Connector Type:
@@ -81,12 +81,19 @@
                         <option value="CHAdeMO">CHAdeMO</option>
                     </select>
                 </label>
-                <p class="hint">Click on the map to set location</p>
-                <input type="hidden" id="station-lat">
-                <input type="hidden" id="station-lng">
+                
+                <!-- Location Selection -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #667eea;">📍 Station Location</p>
+                    <p class="hint" style="margin-bottom: 10px;">Click anywhere on the map to set the station location</p>
+                    <p id="coord-display" style="margin: 0; color: #e74c3c; font-weight: 500;">No location selected yet</p>
+                    <input type="hidden" id="station-lat">
+                    <input type="hidden" id="station-lng">
+                </div>
+                
                 <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">Add Station</button>
-                    <button type="button" id="cancel-add" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">✅ Add Station</button>
+                    <button type="button" id="cancel-add" class="btn btn-secondary">❌ Cancel</button>
                 </div>
             </form>
         </div>

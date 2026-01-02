@@ -233,3 +233,24 @@ header p {
         opacity: 0.8;
     }
 }
+
+/* Bounce animation for temp marker */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Custom marker styles */
+.custom-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+.temp-marker {
+    background: transparent !important;
+    border: none !important;
+}
