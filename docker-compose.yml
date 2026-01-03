@@ -154,6 +154,37 @@ services:
       ELASTICSEARCH_HOST: elasticsearch
     networks:
       - ev-network
+  heartbeat-producer:
+    build:
+      context: ./services/heartbeat
+      dockerfile: Dockerfile.producer
+    container_name: ev-heartbeat-producer
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      POSTGRES_HOST: postgres
+      HEARTBEAT_INTERVAL: 60  # seconds
+    networks:
+      - ev-network
+    restart: unless-stopped
+  heartbeat-consumer:
+    build:
+      context: ./services/heartbeat
+      dockerfile: Dockerfile.consumer
+    container_name: ev-heartbeat-consumer
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      POSTGRES_HOST: postgres
+    networks:
+      - ev-network
+    restart: unless-stopped
+
+
 
 networks:
   ev-network:

@@ -48,4 +48,35 @@ INSERT INTO charging_stations (name, location_lat, location_lng, city, country, 
 ('Slottsskogen Park', 57.6832, 11.9434, 'Göteborg', 'Sweden', 22, 'Type2', 'available');
 
 ---
+-- Station heartbeats
+CREATE TABLE IF NOT EXISTS station_heartbeats (
+    id SERIAL PRIMARY KEY,
+    station_id UUID REFERENCES charging_stations(id),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20),  -- 'online', 'degraded', 'offline'
+    voltage_v DECIMAL(5,2),
+    temperature_c DECIMAL(4,1),
+    signal_strength INT,  -- 0-100
+    uptime_hours INT
+);
 
+-- Index for fast lookups
+CREATE INDEX IF NOT EXISTS idx_heartbeat_station_time 
+ON station_heartbeats(station_id, timestamp DESC);
+
+-- Station health view (latest status for each station)
+CREATE OR REPLACE VIEW station_health_latest AS
+SELECT DISTINCT ON (station_id)
+    station_id,
+    status,
+    timestamp as last_heartbeat,
+    voltage_v,
+    temperature_c,
+    signal_strength,
+    CASE 
+        WHEN timestamp > NOW() - INTERVAL '5 minutes' THEN 'online'
+        WHEN timestamp > NOW() - INTERVAL '15 minutes' THEN 'degraded'
+        ELSE 'offline'
+    END as computed_health
+FROM station_heartbeats
+ORDER BY station_id, timestamp DESC;
