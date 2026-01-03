@@ -140,6 +140,20 @@ services:
     networks:
       - ev-network
     restart: unless-stopped
+  monitor:
+    build:
+      context: ./services/monitor
+    container_name: ev-monitor
+    depends_on:
+      - kafka
+      - postgres
+      - elasticsearch
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      POSTGRES_HOST: postgres
+      ELASTICSEARCH_HOST: elasticsearch
+    networks:
+      - ev-network
 
 networks:
   ev-network:
