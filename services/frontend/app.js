@@ -229,9 +229,11 @@ async function loadStations() {
         alert('Failed to load stations. Check console for details.');
     }
 }
-// Load stats
+
+// Load stats AND health
 async function loadStats() {
     try {
+        // Existing stats
         const response = await fetch(`${API_URL}/stats`);
         const data = await response.json();
         
@@ -240,8 +242,46 @@ async function loadStats() {
         document.getElementById('today-energy').textContent = `${data.today.energy_kwh.toFixed(1)} kWh`;
         document.getElementById('today-revenue').textContent = `€${data.today.revenue_eur.toFixed(2)}`;
         
+        // NEW: Health stats
+        const healthResponse = await fetch(`${API_URL}/stations/health`);
+        const healthData = await healthResponse.json();
+        
+        if (healthData.status === 'ok') {
+            // Update health panel (we'll add this to HTML)
+            updateHealthPanel(healthData);
+        }
+        
     } catch (error) {
         console.error('Error loading stats:', error);
+    }
+}
+
+function updateHealthPanel(healthData) {
+    // Show health counts
+    const healthPanel = document.getElementById('health-panel');
+    if (healthPanel) {
+        healthPanel.innerHTML = `
+            <div class="health-stat online">
+                <span class="health-icon">🟢</span>
+                <span class="health-count">${healthData.health_counts.online}</span>
+                <span class="health-label">Online</span>
+            </div>
+            <div class="health-stat degraded">
+                <span class="health-icon">🟡</span>
+                <span class="health-count">${healthData.health_counts.degraded}</span>
+                <span class="health-label">Degraded</span>
+            </div>
+            <div class="health-stat offline">
+                <span class="health-icon">🔴</span>
+                <span class="health-count">${healthData.health_counts.offline}</span>
+                <span class="health-label">Offline</span>
+            </div>
+        `;
+    }
+    
+    // Show offline stations alert if any
+    if (healthData.offline_stations.length > 0) {
+        console.warn(`⚠️ ${healthData.offline_stations.length} stations offline!`);
     }
 }
 

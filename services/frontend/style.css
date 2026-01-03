@@ -373,3 +373,28 @@ header p {
     25% { transform: translateX(-10px); }
     75% { transform: translateX(10px); }
 }
+
+.health-panel {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    justify-content: center;
+}
+
+.health-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    min-width: 100px;
+}
+
+.health-stat.online { background: #d4edda; }
+.health-stat.degraded { background: #fff3cd; }
+.health-stat.offline { background: #f8d7da; }
+
+.health-icon { font-size: 2rem; }
+.health-count { font-size: 1.5rem; font-weight: bold; margin: 0.5rem 0; }
+.health-label { font-size: 0.9rem; color: #666; }
