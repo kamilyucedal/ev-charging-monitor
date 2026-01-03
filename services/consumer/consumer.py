@@ -109,78 +109,120 @@ class ChargingEventConsumer:
         """Handle charging_started event"""
         cursor = self.pg_conn.cursor()
         
-        # Insert new session
-        cursor.execute("""
-            INSERT INTO charging_sessions (id, station_id, start_time, status)
-            VALUES (%s, %s, %s, %s)
-        """, (
-            event['session_id'],
-            event['station_id'],
-            event['timestamp'],
-            'in_progress'
-        ))
-        
-        # Log event
-        cursor.execute("""
-            INSERT INTO charging_events (session_id, event_type, event_data)
-            VALUES (%s, %s, %s)
-        """, (
-            event['session_id'],
-            event['event_type'],
-            json.dumps(event)
-        ))
-        
-        self.pg_conn.commit()
-        cursor.close()
-        
-        # Index to Elasticsearch
-        self.es_client.index(index='charging-events', document=event)
-        
-        logger.info(f"✅ Processed charging_started: {event['session_id'][:8]}")
-    
+        try:
+            # Insert new session
+            cursor.execute("""
+                INSERT INTO charging_sessions (id, station_id, start_time, status)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+            """, (
+                event['session_id'],
+                event['station_id'],
+                event['timestamp'],
+                'in_progress'
+            ))
+            
+            # Log event (AFTER session insert)
+            cursor.execute("""
+                INSERT INTO charging_events (session_id, event_type, event_data)
+                VALUES (%s, %s, %s)
+            """, (
+                event['session_id'],
+                event['event_type'],
+                json.dumps(event)
+            ))
+            
+            self.pg_conn.commit()
+            
+        except Exception as e:
+            logger.error(f"Error in charging_started: {e}")
+            self.pg_conn.rollback()
+        finally:
+            cursor.close()
+
     def process_charging_progress(self, event):
         """Handle charging_progress event"""
-        # Just log to Elasticsearch for monitoring
-        self.es_client.index(index='charging-events', document=event)
+        cursor = self.pg_conn.cursor()
         
-        logger.info(f"📊 Progress update: {event['session_id'][:8]} - {event['energy_delivered_kwh']} kWh")
-    
+        try:
+            # Check if session exists, if not, create it (defensive)
+            cursor.execute("""
+                INSERT INTO charging_sessions (id, station_id, start_time, status)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+            """, (
+                event['session_id'],
+                event['station_id'],
+                event['timestamp'],
+                'in_progress'
+            ))
+            
+            # Log event
+            cursor.execute("""
+                INSERT INTO charging_events (session_id, event_type, event_data)
+                VALUES (%s, %s, %s)
+            """, (
+                event['session_id'],
+                event['event_type'],
+                json.dumps(event)
+            ))
+            
+            self.pg_conn.commit()
+            
+        except Exception as e:
+            logger.error(f"Error in charging_progress: {e}")
+            self.pg_conn.rollback()
+        finally:
+            cursor.close()
+
     def process_charging_completed(self, event):
         """Handle charging_completed event"""
         cursor = self.pg_conn.cursor()
         
-        # Update session
-        cursor.execute("""
-            UPDATE charging_sessions
-            SET end_time = %s,
-                energy_delivered_kwh = %s,
-                cost_eur = %s,
-                status = 'completed'
-            WHERE id = %s
-        """, (
-            event['timestamp'],
-            event['energy_delivered_kwh'],
-            event['cost_eur'],
-            event['session_id']
-        ))
-        
-        # Log event
-        cursor.execute("""
-            INSERT INTO charging_events (session_id, event_type, event_data)
-            VALUES (%s, %s, %s)
-        """, (
-            event['session_id'],
-            event['event_type'],
-            json.dumps(event)
-        ))
-        
-        self.pg_conn.commit()
-        cursor.close()
-        
-        # Index to Elasticsearch
-        self.es_client.index(index='charging-events', document=event)
-        
-        logger.info(f"✅ Completed session: {event['session_id'][:8]} - {event['energy_delivered_kwh']} kWh, €{event['cost_eur']}")
+        try:
+            # Ensure session exists (defensive)
+            cursor.execute("""
+                INSERT INTO charging_sessions (id, station_id, start_time, status)
+                VALUES (%s, %s, NOW() - INTERVAL '30 minutes', %s)
+                ON CONFLICT (id) DO NOTHING
+            """, (
+                event['session_id'],
+                event['station_id'],
+                'in_progress'
+            ))
+            
+            # Update session
+            cursor.execute("""
+                UPDATE charging_sessions
+                SET end_time = %s,
+                    energy_delivered_kwh = %s,
+                    cost_eur = %s,
+                    status = 'completed'
+                WHERE id = %s
+            """, (
+                event['timestamp'],
+                event['energy_delivered_kwh'],
+                event['cost_eur'],
+                event['session_id']
+            ))
+            
+            # Log event
+            cursor.execute("""
+                INSERT INTO charging_events (session_id, event_type, event_data)
+                VALUES (%s, %s, %s)
+            """, (
+                event['session_id'],
+                event['event_type'],
+                json.dumps(event)
+            ))
+            
+            self.pg_conn.commit()
+            
+        except Exception as e:
+            logger.error(f"Error in charging_completed: {e}")
+            self.pg_conn.rollback()
+        finally:
+            cursor.close()
 
     def validate_event(self, event):
         """Validate event structure"""
