@@ -206,6 +206,50 @@ def add_station(station: dict):
     
     return {"id": str(new_id), "message": "Station added successfully"}
 
+@app.get("/api/stations/health")
+def get_station_health():
+    """Get health status summary"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Count by status
+    cursor.execute("""
+        SELECT computed_health, COUNT(*) 
+        FROM station_health_latest 
+        GROUP BY computed_health
+    """)
+    
+    health_counts = {row[0]: row[1] for row in cursor.fetchall()}
+    
+    # Recent offline stations
+    cursor.execute("""
+        SELECT s.id, s.name, s.city, h.last_heartbeat, h.voltage_v, h.temperature_c
+        FROM station_health_latest h
+        JOIN charging_stations s ON h.station_id = s.id
+        WHERE h.computed_health = 'offline'
+        ORDER BY h.last_heartbeat DESC
+        LIMIT 10
+    """)
+    
+    offline_stations = []
+    for row in cursor.fetchall():
+        offline_stations.append({
+            'id': str(row[0]),
+            'name': row[1],
+            'city': row[2],
+            'last_seen': row[3].isoformat() if row[3] else None,
+            'voltage_v': float(row[4]) if row[4] else 0,
+            'temperature_c': float(row[5]) if row[5] else 0
+        })
+    
+    cursor.close()
+    conn.close()
+    
+    return {
+        'health_counts': health_counts,
+        'offline_stations': offline_stations
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
