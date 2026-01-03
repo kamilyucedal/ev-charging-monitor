@@ -7,6 +7,9 @@ from datetime import datetime, timedelta
 from kafka import KafkaProducer
 import psycopg2
 from faker import Faker
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -186,6 +189,64 @@ class ChargingEventProducer:
                 logger.error(f"Error in producer loop: {e}")
                 time.sleep(5)
 
+
+class HighThroughputProducer(ChargingEventProducer):
+    def __init__(self, num_threads=5):
+        super().__init__()
+        self.num_threads = num_threads
+        self.target_events_per_second = 20  # Adjustable
+    
+    def producer_worker(self, worker_id):
+        """Each thread produces events"""
+        logger.info(f"Worker {worker_id} started")
+        
+        while True:
+            try:
+                # Random action
+                action = random.choices(
+                    ['start', 'progress', 'complete'],
+                    weights=[0.3, 0.5, 0.2]
+                )[0]
+                
+                if action == 'start' and len(self.active_sessions) < 200:
+                    event = self.generate_charging_started_event()
+                    self.send_event(event)
+                
+                elif action == 'progress' and self.active_sessions:
+                    session_id = random.choice(list(self.active_sessions.keys()))
+                    event = self.generate_charging_progress_event(session_id)
+                    self.send_event(event)
+                
+                elif action == 'complete' and self.active_sessions:
+                    session_id = random.choice(list(self.active_sessions.keys()))
+                    event = self.generate_charging_completed_event(session_id)
+                    self.send_event(event)
+                
+                # Control throughput
+                time.sleep(self.num_threads / self.target_events_per_second)
+                
+            except Exception as e:
+                logger.error(f"Worker {worker_id} error: {e}")
+                time.sleep(1)
+    
+    def run_parallel(self):
+        """Run multiple producer threads"""
+        logger.info(f"🚀 Starting high-throughput producer with {self.num_threads} threads")
+        logger.info(f"Target: {self.target_events_per_second} events/second")
+        
+        time.sleep(10)
+        
+        if not self.connect_kafka():
+            return
+        
+        time.sleep(5)
+        self.load_stations()
+        
+        # Start worker threads
+        with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
+            for i in range(self.num_threads):
+                executor.submit(self.producer_worker, i)
+
 if __name__ == "__main__":
-    producer = ChargingEventProducer()
-    producer.run()
+    producer = HighThroughputProducer(num_threads=5)
+    producer.run_parallel()
